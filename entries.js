@@ -3,7 +3,7 @@
 // ============================================================
 
 window.SITE = {
-  title: "scratchpad",
+  title: "bloco-de-notas",
   author: "Lucas Fazia",
   tagline: "Notas de trabalho. Publicadas conforme escritas, não conforme prontas.",
   links: [
