@@ -10,6 +10,7 @@
   --graphite:   #6C6F76;
   --rule:       #E3E1DA;
   --red:        #A8372B;
+  --red-soft:   rgba(168, 55, 43, 0.22);
   --red-ghost:  rgba(168, 55, 43, 0.30);
 
   --display: "Fraunces", Georgia, serif;
@@ -101,8 +102,10 @@ a { color: inherit; }
   margin: 0 auto;
   padding: 0 var(--gutter);
 }
-/* a margem do caderno */
+/* A margem do caderno (linha vertical vermelha).
+   Para trazer de volta, troque "none" por "block". */
 .sheet::before {
+  display: none;
   content: "";
   position: absolute;
   top: 0;
