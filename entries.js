@@ -1,19 +1,40 @@
 // ============================================================
-// Adicione uma nova entrada aqui em cima do array (ou em qualquer
-// posição — a ordem de exibição é sempre por data, não pela ordem
-// no arquivo). Cada entrada é um objeto separado por vírgula.
+//  1) CONFIGURAÇÃO DO SITE — mexa aqui uma vez só.
+// ============================================================
+
+window.SITE = {
+  title: "scratchpad",
+  author: "Lucas Fazia",
+  tagline: "Notas de trabalho. Publicadas conforme escritas, não conforme prontas.",
+  links: [
+    // Cole suas URLs aqui. Deixe "" para o link não aparecer.
+    { label: "LinkedIn", url: "" },
+    { label: "X", url: "" },
+  ],
+};
+
+// ============================================================
+//  2) AS NOTAS
 //
-// Formato do "body": texto simples.
-//   - linha em branco = novo parágrafo
-//   - **texto** = negrito
-//   - *texto*   = itálico
-//   - [texto](https://link.com) = link
+//  Cada nota é um objeto { }. Para publicar uma nova, copie um
+//  bloco inteiro e cole logo abaixo do "window.ENTRIES = [".
+//  A ordem no arquivo não importa — o site organiza por data.
+//
+//  Campos:
+//    date  — obrigatório, no formato "AAAA-MM-DD"
+//    title — obrigatório
+//    deck  — opcional, uma linha de resumo abaixo do título
+//    body  — o texto. Linha em branco = novo parágrafo.
+//            **negrito**, *itálico*, [texto](https://link.com)
+//
+//  Atenção: o texto fica entre crases (`), não aspas.
 // ============================================================
 
 window.ENTRIES = [
   {
     date: "2026-07-27",
     title: "Três coisas para quem tem pressa",
+    deck: "Inquietude não é defeito a corrigir. É energia à espera de endereço.",
     body: `Fui uma criança apressada. Li cedo, andei cedo, escrevi cedo. Essa foi uma constante na minha vida. Com o tempo entendi que o problema nunca foi a pressa, e sim a pressa sem endereço: essa não vira construção, vira ansiedade.
 
 Três ideias que me ajudaram a endereçar.

@@ -1,84 +1,201 @@
-// Minimal renderer — no build step. Edit entries.js to publish.
+// scratchpad — renderizador. Sem build, sem dependências.
+// Você só edita entries.js.
 
-function escapeHtml(str) {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
+(function () {
+  "use strict";
 
-// Very small markdown-lite: paragraphs (blank line), **bold**, *italic*, [text](url)
-function renderBody(raw) {
-  const paragraphs = raw.trim().split(/\n\s*\n/);
-  return paragraphs
-    .map((p) => {
-      let html = escapeHtml(p.trim());
-      html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-      html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
-      html = html.replace(
-        /\[(.+?)\]\((.+?)\)/g,
-        '<a href="$2" target="_blank" rel="noopener">$1</a>'
-      );
-      html = html.replace(/\n/g, "<br>");
-      return `<p>${html}</p>`;
-    })
-    .join("");
-}
+  var SITE = window.SITE || {};
+  var ENTRIES = window.ENTRIES || [];
 
-function formatDate(dateStr) {
-  const d = new Date(dateStr + "T12:00:00");
-  return d.toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
-}
+  // ---------- utilidades ----------
 
-function render() {
-  const feed = document.getElementById("feed");
-  const countEl = document.getElementById("entry-count");
-  const entries = (window.ENTRIES || []).slice();
-
-  if (entries.length === 0) {
-    feed.innerHTML = `<p class="empty-state">nenhuma entrada ainda. adicione uma em entries.js.</p>`;
-    countEl.textContent = "";
-    return;
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
   }
 
-  // chronological order determines the notebook index (oldest = 001)
-  const chronological = [...entries].sort(
-    (a, b) => new Date(a.date) - new Date(b.date)
-  );
-  const indexOf = new Map(chronological.map((e, i) => [e, i + 1]));
+  function slugify(s) {
+    return String(s)
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
 
-  const newestFirst = [...entries].sort(
-    (a, b) => new Date(b.date) - new Date(a.date)
-  );
+  function inline(text) {
+    var h = escapeHtml(text);
+    h = h.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    h = h.replace(/(^|[^*])\*([^*]+?)\*/g, "$1<em>$2</em>");
+    h = h.replace(
+      /\[(.+?)\]\((https?:\/\/[^\s)]+)\)/g,
+      '<a href="$2" target="_blank" rel="noopener">$1</a>'
+    );
+    return h.replace(/\n/g, "<br>");
+  }
 
-  const firstDate = formatDate(chronological[0].date);
-  countEl.textContent = `${entries.length} ${
-    entries.length === 1 ? "entrada" : "entradas"
-  } desde ${firstDate}`;
+  function paragraphs(body) {
+    return String(body).trim().split(/\n\s*\n/).filter(Boolean);
+  }
 
-  feed.innerHTML = newestFirst
-    .map((entry) => {
-      const num = String(indexOf.get(entry)).padStart(3, "0");
-      const title = entry.title
-        ? `<h2 class="entry-title">${escapeHtml(entry.title)}</h2>`
-        : "";
-      return `
-        <article class="entry">
-          <div class="entry-margin">
-            <span class="entry-index">${num}</span>
-            <span class="entry-date">${formatDate(entry.date)}</span>
-          </div>
-          <div class="entry-body">
-            ${title}
-            <div class="entry-text">${renderBody(entry.body)}</div>
-          </div>
-        </article>`;
-    })
-    .join("");
-}
+  function renderProse(body) {
+    return paragraphs(body).map(function (p) {
+      return "<p>" + inline(p.trim()) + "</p>";
+    }).join("");
+  }
 
-render();
+  function formatDate(iso) {
+    var d = new Date(iso + "T12:00:00");
+    if (isNaN(d)) return iso;
+    var months = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+    return d.getDate() + " " + months[d.getMonth()] + " " + d.getFullYear();
+  }
+
+  // ---------- índice ----------
+
+  var byOldest = ENTRIES.slice().sort(function (a, b) {
+    return new Date(a.date) - new Date(b.date);
+  });
+  var byNewest = byOldest.slice().reverse();
+
+  byOldest.forEach(function (e, i) {
+    e._n = String(i + 1).padStart(3, "0");
+    e._slug = e.slug || slugify(e.title || e.date);
+  });
+
+  function findBySlug(slug) {
+    for (var i = 0; i < byNewest.length; i++) {
+      if (byNewest[i]._slug === slug) return byNewest[i];
+    }
+    return null;
+  }
+
+  // ---------- blocos ----------
+
+  function marginalia(entry) {
+    return (
+      '<div class="marginalia">' +
+        '<span class="numeral">' + entry._n + "</span>" +
+        '<span class="stamp">' + formatDate(entry.date) + "</span>" +
+      "</div>"
+    );
+  }
+
+  function feedItem(entry) {
+    var deck = entry.deck
+      ? '<p class="deck">' + inline(entry.deck) + "</p>"
+      : "";
+    var first = paragraphs(entry.body)[0] || "";
+    var href = "#/" + entry._slug;
+    return (
+      '<article class="row">' +
+        marginalia(entry) +
+        '<div class="entry-body">' +
+          '<h2 class="entry-title"><a href="' + href + '">' +
+            escapeHtml(entry.title || "Sem título") +
+          "</a></h2>" +
+          deck +
+          '<div class="excerpt"><p>' + inline(first.trim()) + "</p></div>" +
+          '<a class="more" href="' + href + '">Ler <span class="arrow">&rarr;</span></a>' +
+        "</div>" +
+      "</article>"
+    );
+  }
+
+  function renderFeed() {
+    if (!ENTRIES.length) {
+      return '<div class="sheet"><p class="empty">nenhuma entrada ainda. adicione uma em entries.js.</p></div>';
+    }
+    return (
+      '<div class="sheet feed">' +
+        byNewest.map(feedItem).join("") +
+      "</div>"
+    );
+  }
+
+  function renderPost(entry) {
+    var deck = entry.deck
+      ? '<p class="deck">' + inline(entry.deck) + "</p>"
+      : "";
+    return (
+      '<div class="sheet post">' +
+        '<p class="crumb"><a class="back" href="#/"><span class="arrow">&larr;</span> todas as notas</a></p>' +
+        '<article class="row">' +
+          marginalia(entry) +
+          "<div>" +
+            '<h1 class="post-title">' + escapeHtml(entry.title || "") + "</h1>" +
+            deck +
+            '<div class="prose">' + renderProse(entry.body) + "</div>" +
+            '<nav class="post-nav"><a class="back" href="#/"><span class="arrow">&larr;</span> todas as notas</a></nav>' +
+          "</div>" +
+        "</article>" +
+      "</div>"
+    );
+  }
+
+  function renderNotFound() {
+    return (
+      '<div class="sheet post">' +
+        '<p class="empty">nota não encontrada.</p>' +
+        '<p><a class="back" href="#/"><span class="arrow">&larr;</span> todas as notas</a></p>' +
+      "</div>"
+    );
+  }
+
+  // ---------- moldura ----------
+
+  function paintChrome() {
+    var t = SITE.title || "scratchpad";
+    setText("site-author", SITE.author || "");
+    setText("site-title", t);
+    setText("site-tagline", SITE.tagline || "");
+    setText("foot-title", t);
+
+    var links = SITE.links || [];
+    var nav = document.getElementById("foot-links");
+    if (nav) {
+      nav.innerHTML = links
+        .filter(function (l) { return l && l.url; })
+        .map(function (l) {
+          return '<a href="' + escapeHtml(l.url) + '" target="_blank" rel="noopener">' +
+                 escapeHtml(l.label) + "</a>";
+        })
+        .join("");
+    }
+  }
+
+  function setText(id, value) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = value;
+  }
+
+  // ---------- roteador ----------
+
+  function route() {
+    var main = document.getElementById("main");
+    var hash = (location.hash || "").replace(/^#\/?/, "");
+    var siteTitle = SITE.title || "scratchpad";
+
+    if (!hash) {
+      main.innerHTML = renderFeed();
+      document.title = siteTitle;
+    } else {
+      var entry = findBySlug(hash);
+      if (entry) {
+        main.innerHTML = renderPost(entry);
+        document.title = entry.title + " — " + siteTitle;
+      } else {
+        main.innerHTML = renderNotFound();
+        document.title = siteTitle;
+      }
+    }
+    window.scrollTo(0, 0);
+  }
+
+  paintChrome();
+  route();
+  window.addEventListener("hashchange", route);
+})();
