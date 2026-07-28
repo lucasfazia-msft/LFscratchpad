@@ -197,7 +197,8 @@ a { color: inherit; }
 .more:hover .arrow { transform: translateX(3px); }
 
 /* ---------- post ---------- */
-.post { padding: 52px 0 24px; }
+/* Só vertical — o horizontal vem de .sheet e não pode ser sobrescrito. */
+.post { padding-top: 52px; padding-bottom: 24px; }
 
 .post .post-title {
   font-family: var(--display);
