@@ -178,7 +178,7 @@ a { color: inherit; }
   max-width: 46ch;
 }
 
-.excerpt { max-width: 64ch; }
+.excerpt { max-width: 64ch; overflow-wrap: break-word; }
 .excerpt p { margin: 0 0 1em; }
 
 .more {
@@ -209,7 +209,7 @@ a { color: inherit; }
   margin: 0 0 16px;
 }
 
-.prose { max-width: 64ch; font-size: 18.5px; }
+.prose { max-width: 64ch; font-size: 18.5px; overflow-wrap: break-word; }
 .prose p { margin: 0 0 1.15em; }
 .prose p:last-child { margin-bottom: 0; }
 .prose strong { font-weight: 600; }
@@ -286,6 +286,8 @@ a { color: inherit; }
 
 /* ---------- mobile ---------- */
 @media (max-width: 620px) {
+  /* respiro lateral maior no celular */
+  :root { --gutter: 28px; }
   body { font-size: 17px; }
   .sheet::before { display: none; }
   .row { grid-template-columns: 1fr; gap: 10px; }
@@ -300,6 +302,10 @@ a { color: inherit; }
   .stamp { margin-top: 0; }
   .feed .row { padding: 34px 0; }
   .prose, .excerpt { max-width: none; }
+}
+
+@media (max-width: 380px) {
+  :root { --gutter: 22px; }
 }
 
 /* ---------- motion & foco ---------- */
